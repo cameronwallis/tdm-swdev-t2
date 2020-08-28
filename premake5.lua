@@ -5,7 +5,7 @@ project "ercalc"
   kind "ConsoleApp"
   language "C++"
   includedirs { "include" }
-  links { "ncurses", "boost_program_options" }
+  links { "ncurses", "boost_program_options", "pq", "pqxx" }
   files { "src/**.hpp", "src/**.cpp" }
 
   configuration "Debug"

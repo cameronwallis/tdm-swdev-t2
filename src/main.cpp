@@ -2,6 +2,7 @@
 #include <curses.h>
 #include <cstdlib>
 #include <boost/program_options.hpp>
+#include <pqxx/pqxx>
 
 #include "InteractiveHandler.hpp"
 
@@ -25,11 +26,12 @@ int main(int argc, char **argv) {
 		std::exit(EXIT_SUCCESS);
 	}
 
-	if (vm.count("compression")) {
-		std::cout << "Compression level was set to " 
-	 << vm["compression"].as<int>() << ".\n";
-	} else {
-		std::cout << "Compression level was not set.\n";
+	std::unique_ptr<pqxx::connection> conn;
+	try {
+		conn = std::make_unique<pqxx::connection>("host=localhost port=5434 user=postgres dbname=tdm_test");
+	} catch(std::exception const &e) {
+		std::cerr << e.what() << std::endl;
+		std::exit(EXIT_FAILURE);
 	}
 
 	if (vm.count("interactive")) {
