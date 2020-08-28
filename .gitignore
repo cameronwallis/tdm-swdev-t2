@@ -1,0 +1,8 @@
+# Make articfacts
+*.make
+Makefile
+premake5
+
+# Build artifacts
+bin/
+obj/
