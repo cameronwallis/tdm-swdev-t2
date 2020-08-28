@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include <boost/program_options.hpp>
 
+#include "InteractiveHandler.hpp"
+
 int main(int argc, char **argv) {
 
 	namespace po = boost::program_options;
@@ -31,11 +33,14 @@ int main(int argc, char **argv) {
 	}
 
 	if (vm.count("interactive")) {
-		initscr();
-		printw("Hello World !!!");
-		refresh();                 
-		getch();                   
-		endwin(); 
+		std::unique_ptr<InteractiveHandler> ih = InteractiveHandler::getNewHandler();
+
+		if (ih == nullptr) {
+			std::cerr << "ERROR: Unable to create interactive screen session" << std::endl;
+			std::exit(EXIT_FAILURE);
+		} else {
+			ih->runInteractive();
+		}
 	}
 
 	return 0;
