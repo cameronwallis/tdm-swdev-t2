@@ -24,8 +24,17 @@ InteractiveHandler::~InteractiveHandler() {
 }
 
 void InteractiveHandler::runInteractive() {
-    	
-	printw("Hello World !!!");
-	refresh();                 
-	getch();                   
+
+    bool cont = true;       
+
+    while (cont) {
+        printw("Hello World !!!");
+	    refresh();                 
+	    getch();
+        cont = false;  
+    }          
+}
+
+void InteractiveHandler::setConnection(std::shared_ptr<pqxx::connection> const &c) {
+    this->c = c;
 }
