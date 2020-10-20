@@ -36,7 +36,8 @@ public:
 
     void fetchPositionDetails(std::shared_ptr<pqxx::connection> c);
 
-    void updateEmployee(pqxx::connection c, std::unordered_map<std::string, std::string> updates);
+    void updateEmployee(std::shared_ptr<pqxx::connection> c, std::unordered_map<std::string, std::string> updates);
+    static void insertEmployee(std::shared_ptr<pqxx::connection> c, std::unordered_map<std::string, std::string> record);
 
     int getSalary();
     int getLeave();

@@ -6,6 +6,8 @@
 #include <boost/lexical_cast.hpp>
 #include <ctime>
 
+#include <iostream>
+
 namespace id = boost::uuids;
 
 Employee::Employee(pqxx::row row) {
@@ -58,23 +60,50 @@ void Employee::fetchPositionDetails(std::shared_ptr<pqxx::connection> c) {
     this->position = std::make_unique<Position>(p);
 }
 
-void Employee::updateEmployee(pqxx::connection c, std::unordered_map<std::string, std::string> updates) {
+void Employee::insertEmployee(std::shared_ptr<pqxx::connection> c, std::unordered_map<std::string, std::string> record) {
+    
+    std::string insCmd = "INSERT INTO employees (";
+
+    for (auto const& param : record) {
+        insCmd += param.first + ",";
+    }
+
+    insCmd += "employee_id) VALUES(";
+    
+    for (auto const& param : record) {
+        insCmd += "'" + param.second +"',";
+    }
+
+    id::uuid randId = id::random_generator()();
+
+    insCmd += "'" + boost::lexical_cast<std::string>(randId) + "')";
+
+    std::cout << insCmd << std::endl;
+
+    pqxx::work txn(*c);
+    txn.exec0(insCmd);
+    txn.commit();
+}
+
+void Employee::updateEmployee(std::shared_ptr<pqxx::connection> c, std::unordered_map<std::string, std::string> updates) {
 
     std::string updCmd = "UPDATE employees ";
 
     // loop over every update in the map and add them to the SQL command
     for (auto const& update : updates) {
-        if (update.first == "firstName" || update.first == "lastName" || update.first == "nationalInsurance" || update.first == "startDate") {
+        if (update.first == "firstname" || update.first == "lastname" || update.first == "nationalinsurance" || update.first == "startdate") {
             updCmd += "SET " + update.first + " = '" + update.second + "', ";
         } else {
             continue;
         }
     }
 
+    updCmd = updCmd.substr(0, updCmd.size() - 2);
+    updCmd += ' ';
     // Finish the SQL command
     updCmd += "WHERE employee_id = '" + boost::lexical_cast<std::string>(this->ID) + "'";
 
-    pqxx::work txn(c);
+    pqxx::work txn(*c);
     txn.exec0(updCmd);
     txn.commit();
 }

@@ -1,7 +1,9 @@
 #include <iostream>
 #include <curses.h>
 #include <cstdlib>
+#include <vector>
 #include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
 #include <pqxx/pqxx>
 
 #include "Performance.hpp"
@@ -22,6 +24,9 @@ int main(int argc, char **argv) {
 		("fetch", po::value<std::string>(),"Get an employee based on their ID")
 		("search", po::value<std::string>(), "Search for an employee by name")
 		("insensitive", "Make search case insensitive")
+		("insert", po::value<std::string>(), "Insert a record into the database")
+		("update", po::value<std::string>(), "Update an existing record")
+		("id", po::value<std::string>(), "Pass an id to the update feature");
 	;
 
 	// Parse options
@@ -57,6 +62,55 @@ int main(int argc, char **argv) {
 
 	// Choose action based on options
 	// If user requested a fetch or search 
+
+	if (vm.count("insert")) {
+		std::string option = vm["insert"].as<std::string>();
+		std::vector<std::string> params;
+		boost::split(params, option, boost::is_any_of(","));
+
+		std::unordered_map<std::string, std::string> paramMap;
+
+		for (auto param : params) {
+			std::vector<std::string> kv;
+			boost::split(kv, param, boost::is_any_of("="));
+
+			paramMap[kv[0]] = kv[1];
+		}
+
+		Employee::insertEmployee(conn, paramMap);
+		std::exit(EXIT_SUCCESS);
+
+	}
+
+	if (vm.count("update")) {
+		std::string option = vm["update"].as<std::string>();
+		id::uuid record_id = boost::lexical_cast<id::uuid>(vm["id"].as<std::string>());
+
+		std::vector<std::string> params;
+		boost::split(params, option, boost::is_any_of(","));
+
+		std::unordered_map<std::string, std::string> paramMap;
+
+		for (auto param : params) {
+			std::vector<std::string> kv;
+			boost::split(kv, param, boost::is_any_of("="));
+
+			paramMap[kv[0]] = kv[1];
+		}
+
+		std::string fetchMe = "SELECT * FROM employees WHERE employee_id = '" + boost::lexical_cast<std::string>(record_id) + "'";
+		pqxx::work txn(*conn);
+
+		r = txn.exec1(fetchMe);
+		txn.commit();
+
+		Employee e(r);
+
+		e.updateEmployee(conn, paramMap);
+		std::exit(EXIT_SUCCESS);
+
+	}
+
 	if (!id.empty()) {
 		std::string fetchMe = "SELECT * FROM employees WHERE employee_id = '" + id + "'";
 		pqxx::work txn(*conn);
@@ -127,6 +181,7 @@ int main(int argc, char **argv) {
 	Performance recentPerf(perf);
 
 	// Output calculations
+	std::cout << "ID: " + boost::lexical_cast<std::string>(cameron.getId()) << std::endl;
 	std::cout << "FULL NAME: " + cameron.getFullName() << std::endl;
 	std::cout << "SALARY: " << cameron.getSalary() << std::endl;
 	std::cout << "SALARY PER MONTH: " << (static_cast<float>(cameron.getSalary()) / 12.0f) << std::endl; 
